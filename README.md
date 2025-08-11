@@ -40,8 +40,8 @@ financial_data_pipeline/
 │       │   │   └── int_daily_transaction_volumes.sql
 │       │   └── marts/
 │       │       └── finance_transaction_fact.sql
-│       ├── macros/
-│       └── tests/
+│       ├── logs/
+│       └── seeds/
 ├── data/
 │   ├── transactions.csv
 │   ├── accounts.csv
@@ -70,7 +70,7 @@ Sample CSV datasets provided in `/data/`:
 
 ### 2️⃣ Clone Repository
 ```bash
-git clone https://github.com/yourusername/financial_data_pipeline.git
+git clone https://github.com/faisalfaturohman/financial_data_pipeline.git
 cd financial_data_pipeline
 ```
 
@@ -159,6 +159,3 @@ dbt docs serve --profiles-dir /opt/airflow/dbt
 - **PostgreSQL:** `localhost:5432` (user: `airflow`, pass: `airflow`)
 
 ---
-
-## 📜 License
-This project is released under the MIT License.
