@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: finance_transaction_fact
+    description: "Fact table for transaction analytics with USD-converted value"
+    columns:
+      - name: transaction_id
+        tests: [not_null, unique]
+      - name: account_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_accounts')
+              field: account_id
+      - name: customer_id
+        tests:
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id

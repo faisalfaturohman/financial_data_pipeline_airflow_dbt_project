@@ -1,0 +1,97 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw financial data from source systems"
+    tables:
+      - name: transactions
+        description: "Raw transaction data"
+        columns:
+          - name: transaction_id
+            description: "Unique transaction identifier"
+            tests:
+              - unique
+              - not_null
+      - name: accounts
+        description: "Raw account data"
+        columns:
+          - name: account_id
+            description: "Unique account identifier"
+            tests:
+              - unique
+              - not_null
+      - name: customers
+        description: "Raw customer data"
+        columns:
+          - name: customer_id
+            description: "Unique customer identifier"
+            tests:
+              - unique
+              - not_null
+
+models:
+  - name: stg_transactions
+    description: "Staged and cleaned transaction data"
+    columns:
+      - name: transaction_id
+        description: "Unique transaction identifier"
+        tests:
+          - unique
+          - not_null
+      - name: account_id
+        description: "Account identifier for the transaction"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_accounts')
+              field: account_id
+      - name: amount
+        description: "Transaction amount in original currency"
+        tests:
+          - not_null
+      - name: transaction_date
+        description: "Date when transaction occurred"
+        tests:
+          - not_null
+
+  - name: stg_accounts
+    description: "Staged and cleaned account data"
+    columns:
+      - name: account_id
+        description: "Unique account identifier"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Customer who owns the account"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+
+  - name: stg_customers
+    description: "Staged and cleaned customer data"
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier"
+        tests:
+          - unique
+          - not_null
+      - name: full_name
+        description: "Customer's full name"
+        tests:
+          - not_null
+
+  - name: finance_transaction_fact
+    description: "Complete transaction fact table for analytics"
+    columns:
+      - name: transaction_id
+        description: "Unique transaction identifier"
+        tests:
+          - unique
+          - not_null
+      - name: amount_usd
+        description: "Transaction amount converted to USD"
+        tests:
+          - not_null
