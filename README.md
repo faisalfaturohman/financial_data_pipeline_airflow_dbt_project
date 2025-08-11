@@ -1,49 +1,164 @@
-# Financial Data Pipeline (Docker + Airflow + dbt + Postgres) — with optional GitHub ingest
+# Financial Data Pipeline Solution – Analytics Engineer Technical Test
 
-## What you get
-- **Postgres** data warehouse
-- **Airflow** (LocalExecutor) + **dbt** inside the same container image
-- **DAG** that can:
-  1) Create raw tables
-  2) Optionally **download CSVs from GitHub** (public or private repo) using env vars
-  3) Load CSVs into `raw_*` tables
-  4) Run `dbt seed` (demo currency rates), `dbt run`, `dbt test`
-- **dbt project** with staging, intermediate, marts layers + tests
+## 📌 Overview
+This project implements a **complete financial data pipeline** leveraging modern data engineering tools for orchestration, transformation, and analytics.
 
-## Run (Windows/macOS/Linux)
+**Key Technologies Used:**
+- **Apache Airflow** – Workflow orchestration
+- **dbt** – Data transformation and modeling
+- **PostgreSQL** – Data storage
+- **Docker** – Containerization for reproducible environments
+
+The solution covers:
+- **Data ingestion** from CSV sources
+- **Layered dbt transformations** (staging → intermediate → marts)
+- **Data quality checks**
+- **Performance optimizations**
+- **Automated testing & documentation**
+
+---
+
+## 📂 Project Structure
+```
+financial_data_pipeline/
+├── airflow/
+│   ├── dags/
+│   │   └── financial_data_pipeline_dag.py
+│   ├── logs/
+│   └── plugins/
+├── dbt/
+│   └── financial_pipeline/
+│       ├── dbt_project.yml
+│       ├── profiles.yml
+│       ├── models/
+│       │   ├── staging/
+│       │   │   ├── stg_transactions.sql
+│       │   │   ├── stg_accounts.sql
+│       │   │   └── stg_customers.sql
+│       │   ├── intermediate/
+│       │   │   ├── int_transactions_with_accounts.sql
+│       │   │   └── int_daily_transaction_volumes.sql
+│       │   └── marts/
+│       │       └── finance_transaction_fact.sql
+│       ├── macros/
+│       └── tests/
+├── data/
+│   ├── transactions.csv
+│   ├── accounts.csv
+│   └── customers.csv
+├── docker-compose.yml
+├── Dockerfile.airflow
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## 📊 Data Sources
+Sample CSV datasets provided in `/data/`:
+- **transactions.csv** – Transaction details  
+- **accounts.csv** – Account details  
+- **customers.csv** – Customer demographic info  
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Prerequisites
+- Docker & Docker Compose installed
+- Python 3.9+ (if running locally outside Docker)
+
+### 2️⃣ Clone Repository
 ```bash
-docker compose up --build
-# Airflow UI: http://localhost:8080  (user: admin, pass: admin)
-docker compose exec airflow airflow dags trigger financial_pipeline
+git clone https://github.com/yourusername/financial_data_pipeline.git
+cd financial_data_pipeline
 ```
 
-## CSV source options
-### A) Local files
-Put `customers.csv`, `accounts.csv`, `transactions.csv` in `./data/` (already in this zip if you provided them).
-
-### B) Download from GitHub (public/private)
-Set at least one of these env vars in `docker-compose.yml` (service `airflow`):
-- `GITHUB_RAW_URL_CUSTOMERS`
-- `GITHUB_RAW_URL_ACCOUNTS`
-- `GITHUB_RAW_URL_TRANSACTIONS`
-
-Example (public raw URLs):
+### 3️⃣ Build & Start Services
+```bash
+docker-compose up --build
 ```
-GITHUB_RAW_URL_CUSTOMERS: "https://raw.githubusercontent.com/yourorg/yourrepo/main/data/customers.csv"
-GITHUB_RAW_URL_ACCOUNTS: "https://raw.githubusercontent.com/yourorg/yourrepo/main/data/accounts.csv"
-GITHUB_RAW_URL_TRANSACTIONS: "https://raw.githubusercontent.com/yourorg/yourrepo/main/data/transactions.csv"
+This will start:
+- **Airflow Webserver** at `http://localhost:8080`
+- **PostgreSQL** database
+- **Airflow Scheduler**
+
+---
+
+## 🚀 Pipeline Workflow
+
+### **Airflow DAG:** `financial_data_pipeline`
+Daily scheduled pipeline with the following steps:
+
+1. **Create Raw Tables** – `PostgresOperator` creates schemas & tables in `raw` schema.  
+2. **Load CSV Data** – Python tasks ingest data into PostgreSQL.  
+3. **Run dbt Models** – Transformations executed in layered structure:
+   - **Staging:** Data cleaning & standardization  
+   - **Intermediate:** Business logic & enrichment  
+   - **Marts:** Final fact table for analytics  
+4. **Run dbt Tests** – Data quality checks (unique, not null, referential integrity).  
+5. **Generate Documentation** – dbt docs for lineage & model descriptions.
+
+---
+
+## 🏗️ dbt Architecture
+
+### **Layers**
+- **Staging:** `stg_*` models clean raw data and add quality flags.
+- **Intermediate:** Join staging tables, enrich data (currency conversion, categorization).
+- **Marts:** Create `finance_transaction_fact` table for reporting.
+
+### **Materialization Strategy**
+- **Staging & Intermediate:** Views for flexibility
+- **Marts:** Tables for performance
+
+---
+
+## ✅ Data Quality & Testing
+Implemented with dbt tests:
+- **Uniqueness** and **not null** checks
+- **Foreign key relationships**
+- **Business rules** (e.g., no future transaction dates, zero amount flags)
+
+---
+
+## 📈 Performance Considerations
+- Indexed `transaction_date`, `customer_id`, `account_id`, `transaction_type`, `amount_usd` in marts
+- Early filtering in staging models
+- Efficient joins with proper keys
+- Fixed materialization strategies for optimized performance
+
+---
+
+## 📌 Key Insights
+- **Data Quality Issues:** Handled with flags for anomalies
+- **Currency Conversion:** Fixed-rate USD conversion
+- **Customer Segmentation:** Based on age and account maturity
+- **Transaction Analysis:** Daily aggregation for patterns
+
+---
+
+## 🧪 Running dbt Commands (Inside Airflow Container)
+```bash
+# Run models
+cd /opt/airflow/dbt/financial_pipeline
+dbt run --profiles-dir /opt/airflow/dbt
+
+# Test models
+dbt test --profiles-dir /opt/airflow/dbt
+
+# Generate docs
+dbt docs generate --profiles-dir /opt/airflow/dbt
+dbt docs serve --profiles-dir /opt/airflow/dbt
 ```
 
-If the repo is **private**, also set:
-```
-GITHUB_TOKEN: "ghp_your_personal_access_token"
-```
-> The DAG checks env vars; if a URL is provided, it downloads to `/opt/airflow/data/*.csv`. If not, it uses local `/data/*.csv`.
+---
 
-## dbt connection
-`dbt/profiles.yml` points to `postgres:5432`, db `warehouse`, user `warehouse`, password `warehouse`, schema `public`.
+## 🖥️ Accessing Services
+- **Airflow Web UI:** [http://localhost:8080](http://localhost:8080) (default login: `airflow/airflow`)
+- **PostgreSQL:** `localhost:5432` (user: `airflow`, pass: `airflow`)
 
-## Notes
-- The CSV loader uses `if_exists="replace"` for simplicity. For production, implement staging + UPSERT/MERGE.
-- You can modify schedule in the DAG (`@daily` by default).
-- Currency conversion comes from `dbt/seeds/currency_rates.csv`; adjust as needed and re-run `dbt seed`.
+---
+
+## 📜 License
+This project is released under the MIT License.
