@@ -1,4 +1,4 @@
-# Financial Data Pipeline Solution – Analytics Engineer Technical Test
+# Financial Data Pipeline Solution
 
 ## 📌 Overview
 This project implements a **complete financial data pipeline** leveraging modern data engineering tools for orchestration, transformation, and analytics.
@@ -70,7 +70,7 @@ Sample CSV datasets provided in `/data/`:
 
 ### 2️⃣ Clone Repository
 ```bash
-git clone https://github.com/faisalfaturohman/financial_data_pipeline.git
+git clone https://github.com/faisalfaturohman/financial_data_pipeline_airflow_dbt_project.git
 cd financial_data_pipeline
 ```
 
